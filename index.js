@@ -90,6 +90,12 @@ async function run() {
       const result = await sellingProductCollection.updateOne(filter, updateDoc, options);
       res.send(result)
     })
+    app.delete('/sellingProducts/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const result = await sellingProductCollection.deleteOne(filter);
+      res.send(result);
+    })
 
     app.post('/users', async (req, res) => {
       const { name, email, userType } = req.body;

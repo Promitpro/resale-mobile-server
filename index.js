@@ -41,10 +41,16 @@ async function run() {
       const productId = req.params.id;
       const query = { _id: new ObjectId(productId) };
       const product = await productCollection.findOne(query);
-      // const productsArray = product.products; 
       res.send(product);
     })
+    app.get('/bookings', async(req, res) => {
+      const email = req.query.email;
+      const query = {buyerEmail: email};
+      const booking = await bookingsCollection.find(query).toArray();
+      res.send(booking);
+    })
     app.post('/bookings', async (req, res) => {
+      
       const booking = req.body;
 
       const result = await bookingsCollection.insertOne(booking);
@@ -60,6 +66,18 @@ async function run() {
       const sellingProduct = req.body;
       const result = await sellingProductCollection.insertOne(sellingProduct);
       res.send(result);
+    })
+    app.put('/sellingProducts/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const options = {upsert: true};
+      const updateDoc = {
+        $set: {
+          productAdvertise: 'advertising'
+        }
+      };
+      const result = await sellingProductCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
     })
     
     app.post('/users', async (req, res) => {

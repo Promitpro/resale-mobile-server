@@ -43,14 +43,14 @@ async function run() {
       const product = await productCollection.findOne(query);
       res.send(product);
     })
-    app.get('/bookings', async(req, res) => {
+    app.get('/bookings', async (req, res) => {
       const email = req.query.email;
-      const query = {buyerEmail: email};
+      const query = { buyerEmail: email };
       const booking = await bookingsCollection.find(query).toArray();
       res.send(booking);
     })
     app.post('/bookings', async (req, res) => {
-      
+
       const booking = req.body;
 
       const result = await bookingsCollection.insertOne(booking);
@@ -58,19 +58,30 @@ async function run() {
     })
     app.get('/sellingProducts', async (req, res) => {
       const email = req.query.email;
-      const query = { email: email };
-      const myProducts = await sellingProductCollection.find(query).toArray();
-      res.send(myProducts)
-    })
+      const productAdvertise = req.query.productAdvertise;
+      if (email) { 
+        const query = { email: email };
+        const myProducts = await sellingProductCollection.find(query).toArray();
+        res.send(myProducts);
+      } 
+      else if (productAdvertise === "advertising") {
+        const query = { productAdvertise: productAdvertise };
+        const advertised = await sellingProductCollection.find(query).toArray();
+        res.send(advertised);
+      } 
+      else {
+        res.status(400).send("Invalid request. Please provide either 'email' or 'productAdvertise' query parameter.");
+      }
+    });
     app.post('/sellingProducts', async (req, res) => {
       const sellingProduct = req.body;
       const result = await sellingProductCollection.insertOne(sellingProduct);
       res.send(result);
     })
-    app.put('/sellingProducts/:id', async(req, res) => {
+    app.put('/sellingProducts/:id', async (req, res) => {
       const id = req.params.id;
-      const filter = {_id: new ObjectId(id)};
-      const options = {upsert: true};
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
       const updateDoc = {
         $set: {
           productAdvertise: 'advertising'
@@ -79,7 +90,7 @@ async function run() {
       const result = await sellingProductCollection.updateOne(filter, updateDoc, options);
       res.send(result)
     })
-    
+
     app.post('/users', async (req, res) => {
       const { name, email, userType } = req.body;
       const existingUser = await usersCollection.findOne({ email });

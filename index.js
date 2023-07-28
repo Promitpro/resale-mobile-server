@@ -96,7 +96,16 @@ async function run() {
       const result = await sellingProductCollection.deleteOne(filter);
       res.send(result);
     })
-
+    app.get('/users/buyer', async (req, res) => {
+        const query = {userType: 'user'};
+        const buyer = await usersCollection.find(query).toArray();
+        res.send(buyer);
+    })
+    app.get('/users/seller', async (req,res) =>{
+      const query = {userType: 'seller'};
+      const seller = await usersCollection.find(query).toArray();
+      res.send(seller);
+    })
     app.post('/users', async (req, res) => {
       const { name, email, userType } = req.body;
       const existingUser = await usersCollection.findOne({ email });

@@ -106,6 +106,18 @@ async function run() {
       const seller = await usersCollection.find(query).toArray();
       res.send(seller);
     })
+    app.delete('/users/buyer/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    })
+    app.delete('/users/seller/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    })
     app.post('/users', async (req, res) => {
       const { name, email, userType } = req.body;
       const existingUser = await usersCollection.findOne({ email });

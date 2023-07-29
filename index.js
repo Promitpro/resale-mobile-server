@@ -43,6 +43,15 @@ async function run() {
       const product = await productCollection.findOne(query);
       res.send(product);
     })
+    app.get('/brands/:brand', async(req, res) => {
+      const brand = req.params.brand;
+      const query = {category: brand};
+      const productFromProductCollection = await productCollection.find(query).toArray();
+      const productFromSellingProductCollection = await sellingProductCollection.find(query).toArray();
+      const allProduct = [...productFromProductCollection, ...productFromSellingProductCollection];
+      res.json(allProduct)
+    })
+    
     app.get('/bookings', async (req, res) => {
       const email = req.query.email;
       const query = { buyerEmail: email };

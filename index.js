@@ -64,7 +64,7 @@ async function run() {
 
       const result = await bookingsCollection.insertOne(booking);
       res.send(result);
-    })
+    })                                                   
     app.get('/sellingProducts', async (req, res) => {
       const email = req.query.email;
       const productAdvertise = req.query.productAdvertise;
@@ -104,6 +104,13 @@ async function run() {
       const filter = {_id: new ObjectId(id)};
       const result = await sellingProductCollection.deleteOne(filter);
       res.send(result);
+    })
+    
+    app.get('/users', async(req, res) => {
+      const email = req.query.email;
+      const query = {email: email}
+      const user = await usersCollection.find(query).toArray();
+      res.send(user);
     })
     app.get('/users/buyer', async (req, res) => {
         const query = {userType: 'user'};

@@ -5,6 +5,7 @@ const port = process.env.PORT || 5000;
 
 const app = express();
 
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 app.use(cors());
@@ -24,6 +25,22 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+function verifyJWT (req, res, next){
+  console.log(req.headers.authorization);
+  const authHeader = req.headers.authorization;
+  if(!authHeader){
+    res.status(401).send('unauthorized access')
+  }
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
+    if(err){
+      return res.status(403).send({message: 'forbidden access'})
+    }
+    req.decoded = decoded;
+    next()
+  })
+}
 
 async function run() {
   try {
@@ -52,8 +69,13 @@ async function run() {
       res.json(allProduct)
     })
     
-    app.get('/bookings', async (req, res) => {
+    app.get('/bookings', verifyJWT, async (req, res) => {
       const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if(email !== decodedEmail)
+      {
+        res.status(403).send({message: 'forbidden access'})
+      }
       const query = { buyerEmail: email };
       const booking = await bookingsCollection.find(query).toArray();
       res.send(booking);
@@ -93,7 +115,19 @@ async function run() {
       const options = { upsert: true };
       const updateDoc = {
         $set: {
-          productAdvertise: 'advertising'
+          productAdvertise: 'advertising',
+        }
+      };
+      const result = await sellingProductCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+    })
+    app.put('/sellingProducts/:id/report', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          productReport: 'reported'
         }
       };
       const result = await sellingProductCollection.updateOne(filter, updateDoc, options);
@@ -104,6 +138,17 @@ async function run() {
       const filter = {_id: new ObjectId(id)};
       const result = await sellingProductCollection.deleteOne(filter);
       res.send(result);
+    })
+    app.get('/jwt', async(req, res) => {
+      const email = req.query.email;
+      const query = {email: email};
+      const user = await usersCollection.find(query);
+      if(user){
+        const token = jwt.sign({email}, process.env.ACCESS_TOKEN, {expiresIn: '2h'})
+        return res.send({accessToken: token})
+      }
+      
+      res.status(403).send({accrssToken: ''})
     })
     
     app.get('/users', async(req, res) => {
@@ -145,6 +190,17 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
+    app.get('/reportedItems', async (req, res) => {
+      const query = {productReport: "reported"};
+      const reported = await sellingProductCollection.find(query).toArray();
+      res.send(reported);
+    })
+    app.delete('/reportedItems/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const result = await sellingProductCollection.deleteOne(filter);
+      res.send(result);
+    })
   } finally {
 
   }

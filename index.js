@@ -179,39 +179,51 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updateDoc = {
-          $set: {
-              verify: 'verified',
-          }
+        $set: {
+          verify: 'verified',
+        }
       };
-  
+
       try {
-          const existingDoc = await usersCollection.findOne(filter);
-  
-          if (!existingDoc) {
-              console.log('Document not found:', id);
-              return res.status(404).send('Document not found');
-          }
-  
-          if (existingDoc.verify === 'verified') {
-              console.log('Document already verified:', id);
-              return res.status(200).send('Document already verified');
-          }
-  
-          const result = await usersCollection.updateOne(filter, updateDoc, options);
-  
-          if (result.modifiedCount > 0) {
-              console.log('Document verified:', id);
-              res.status(200).send('Document verified');
-          } else {
-              console.log('Document not modified:', id);
-              res.status(200).send('Document not modified');
-          }
+        const existingDoc = await usersCollection.findOne(filter);
+
+        if (!existingDoc) {
+          console.log('Document not found:', id);
+          return res.status(404).send('Document not found');
+        }
+
+        if (existingDoc.verify === 'verified') {
+          console.log('Document already verified:', id);
+          return res.status(200).send('Document already verified');
+        }
+
+        const result = await usersCollection.updateOne(filter, updateDoc, options);
+
+        if (result.modifiedCount > 0) {
+          console.log('Document verified:', id);
+          res.status(200).send('Document verified');
+        } else {
+          console.log('Document not modified:', id);
+          res.status(200).send('Document not modified');
+        }
       } catch (error) {
-          console.error('Update Error:', error);
-          res.status(500).send('Internal Server Error');
+        console.error('Update Error:', error);
+        res.status(500).send('Internal Server Error');
       }
-  });
-  
+    });
+    app.get('/users/seller/verify/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email, userType: 'seller', verify: 'verified' };
+      const verifiedSeller = await usersCollection.findOne(query);
+
+      if (verifiedSeller) {
+        res.json({ isVerified: true });
+      } else {
+        res.json({ isVerified: false });
+      }
+    });
+
+
     app.get('/users/admin/:email', async (req, res) => {
       const email = req.params.email;
       const query = { email: email };

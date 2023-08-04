@@ -7,6 +7,7 @@ const app = express();
 
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_Key);
 
 app.use(cors());
 app.use(express.json());
@@ -79,6 +80,12 @@ async function run() {
       const query = { buyerEmail: email };
       const booking = await bookingsCollection.find(query).toArray();
       res.send(booking);
+    })
+    app.get('/bookings/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await bookingsCollection.findOne(query);
+      res.send(result);
     })
     app.post('/bookings', async (req, res) => {
 
@@ -167,6 +174,12 @@ async function run() {
       const seller = await usersCollection.find(query).toArray();
       res.send(seller);
     })
+    app.get('/users/admin/:email', async(req, res) => {
+      const email = req.params.email;
+      const query = {email: email};
+      const user = await usersCollection.findOne(query);
+      res.send({isAdmin: user?.userType === 'admin'})
+    })
     app.delete('/users/buyer/:id', async(req, res) => {
       const id = req.params.id;
       const filter = {_id: new ObjectId(id)};
@@ -201,6 +214,18 @@ async function run() {
       const result = await sellingProductCollection.deleteOne(filter);
       res.send(result);
     })
+    app.post('/create-payment-intent', async(req, res) => {
+      const booking = req.body;
+      const price = booking.price;
+      const amount = price*100;
+      const paymentIntent = await stripe.paymentIntents.create({
+          currency: 'bdt',
+          amount: amount,
+          "payment_method_types": ["card"]
+      })
+      console.log(paymentIntent)
+      res.send({clientSecret: paymentIntent.client_secret});
+  })
   } finally {
 
   }
